@@ -14,12 +14,12 @@ app.use(express.json());
 
 const dbConfig = {
     user: 'SiansDB',
-    host: 'webb-sians.db-msk0.amvera.tech', // Внешнее доменное имя
+    host: 'webb-sians.db-msk0.amvera.tech',
     database: 'vk_members',
     password: 'loveDB',
     port: 5432,
     ssl: {
-        rejectUnauthorized: false, // или true, в зависимости от настроек SSL
+        rejectUnauthorized: false,
     },
 };
 
@@ -45,7 +45,6 @@ const vkRequest = async (method, params = {}) => {
     return data.response;
 };
 
-// Middleware для обработки ошибок
 app.use((err, req, res, next) => {
     console.error('Ошибка:', err);
     res.status(500).send({ error: 'Внутренняя ошибка сервера', details: err.message });
@@ -57,7 +56,7 @@ app.get('/api/check-connection', async (req, res, next) => {
         const result = await pool.query('SELECT 1');
         res.send({ message: 'Подключение к БД установлено' });
     } catch (error) {
-        next(error); // Передайте ошибку в middleware для обработки ошибок
+        next(error);
     }
 });
 
@@ -99,7 +98,7 @@ app.get('/api/vk/members', async (req, res) => {
             members.push(...data.items);
 
             if (data.count < count) {
-                break; // Если участников меньше count, значит это последняя страница
+                break;
             }
 
             offset += count;
@@ -117,7 +116,7 @@ app.get('/api/save-members', async (req, res) => {
     try {
         const members = [];
         let offset = 0;
-        const count = 1000; // Максимальное количество участников за запрос
+        const count = 1000;
 
         while (true) {
             const data = await vkRequest('groups.getMembers', {
@@ -134,7 +133,7 @@ app.get('/api/save-members', async (req, res) => {
             members.push(...data.items);
 
             if (data.count < count) {
-                break; // Если участников меньше count, значит это последняя страница
+                break; 
             }
 
             offset += count;
@@ -167,23 +166,7 @@ app.get('/api/members-db', async (req, res, next) => {
         const members = await pool.query('SELECT * FROM members');
         res.send(members.rows);
     } catch (error) {
-        next(error); // Передайте ошибку в middleware для обработки ошибок
-    }
-});
-
-// API для выполнения произвольных запросов к VK API
-app.post('/api/vk', async (req, res, next) => {
-    const { method, params } = req.body;
-
-    if (!method) {
-        return res.status(400).send({ error: 'Не указан метод VK API' });
-    }
-
-    try {
-        const response = await vkRequest(method, params);
-        res.send(response);
-    } catch (error) {
-        next(error); // Передайте ошибку в middleware для обработки ошибок
+        next(error);
     }
 });
 
